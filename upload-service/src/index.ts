@@ -9,6 +9,8 @@ import { createClient } from "redis";
 
 const publisher = createClient();
 publisher.connect();
+const subscriber = createClient();
+subscriber.connect();
 
 const app = express();
 app.use(cors());
@@ -26,9 +28,18 @@ app.post("/deploy", async (req, res) => {
   });
 
   publisher.lPush("build-queue", id);
+  publisher.hSet("status", id, "uploaded");
 
   res.json({
     id: id,
+  });
+});
+
+app.get("/status", (req, res) => {
+  const id = req.query.id;
+  const response = subscriber.hGet("status", id as string);
+  res.json({
+    status: response,
   });
 });
 
